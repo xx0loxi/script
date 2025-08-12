@@ -157,17 +157,26 @@ for i, tabName in ipairs(Tabs) do
     end)
 end
 
--- Функция создания кнопок
+-- ПЕРЕРАБОТАННАЯ функция создания кнопок с подсветкой ПОД кнопкой
 local function CreateButton(parent, text)
+    -- Контейнер для кнопки и подсветки
+    local Container = Instance.new("Frame")
+    Container.BackgroundTransparency = 1
+    Container.Size = UDim2.new(1, 0, 0, 44)  -- Высота: 40 (кнопка) + 4 (подсветка)
+    Container.ClipsDescendants = false
+    Container.Parent = parent
+    
+    -- Основная кнопка
     local Button = Instance.new("TextButton")
     Button.Text = text
     Button.Font = Enum.Font.GothamBold
     Button.TextSize = 14
     Button.Size = UDim2.new(1, 0, 0, 40)
+    Button.Position = UDim2.new(0, 0, 0, 0)
     Button.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
     Button.TextColor3 = Color3.new(1, 1, 1)
     Button.AutoButtonColor = false
-    Button.Parent = parent
+    Button.Parent = Container
     
     local ButtonCorner = Instance.new("UICorner")
     ButtonCorner.CornerRadius = UDim.new(0, 8)
@@ -180,12 +189,19 @@ local function CreateButton(parent, text)
     ButtonPadding.PaddingRight = UDim.new(0, 10)
     ButtonPadding.Parent = Button
     
+    -- Подсветка ПОД кнопкой
     local Highlight = Instance.new("Frame")
     Highlight.Size = UDim2.new(1, 0, 0, 4)
-    Highlight.Position = UDim2.new(0, 0, 1, -4)
+    Highlight.Position = UDim2.new(0, 0, 1, 0)  -- Позиция под кнопкой
+    Highlight.AnchorPoint = Vector2.new(0, 1)
     Highlight.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
     Highlight.Visible = false
-    Highlight.Parent = Button
+    Highlight.Parent = Container
+    
+    -- Уголки для подсветки (только снизу)
+    local HighlightCorner = Instance.new("UICorner")
+    HighlightCorner.CornerRadius = UDim.new(0, 0, 0, 4)
+    HighlightCorner.Parent = Highlight
     
     Button.MouseEnter:Connect(function()
         Button.BackgroundColor3 = Color3.fromRGB(80, 80, 140)
@@ -317,14 +333,13 @@ AddSpacer(PlayerTab, 15)
 AddSpacer(VisualsTab, 15)
 AddSpacer(AimTab, 15)
 
--- Анимация открытия/закрытия меню (ИСПРАВЛЕННАЯ)
+-- Анимация открытия/закрытия меню
 local MenuVisible = false
 local MenuTween
 
 local function ToggleMenu()
     MenuVisible = not MenuVisible
     
-    -- Отменяем текущую анимацию если есть
     if MenuTween then
         MenuTween:Cancel()
     end
@@ -346,7 +361,6 @@ local function ToggleMenu()
         MenuTween:Play()
         
         MenuTween.Completed:Connect(function()
-            -- Добавлена проверка состояния после анимации
             if not MenuVisible then
                 MainFrame.Visible = false
             end
@@ -410,7 +424,6 @@ FlyBtn.MouseButton1Click:Connect(function()
             if UIS:IsKeyDown(Enum.KeyCode.Space) then moveVec += Vector3.new(0,1,0) end
             if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveVec -= Vector3.new(0,1,0) end
             
-            -- Используем значение из ползунка скорости
             local flySpeed = FlySpeedSlider:GetValue()
             FlyBodyVelocity.Velocity = moveVec * flySpeed
         end
@@ -581,7 +594,7 @@ BoxesBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- АИМБОТ С ПРИОРИТЕТОМ ЦЕЛЕЙ БЕЗ ПРЕПЯТСТВИЙ
+-- АИМБОТ
 local AimBotActive = false
 local AimBotConnection
 
