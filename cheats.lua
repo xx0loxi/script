@@ -84,7 +84,7 @@ UIStroke.Parent = MainFrame
 
 -- Заголовок
 local Title = Instance.new("TextLabel")
-Title.Text = "⚡ RAGE MODE V1.13 (Drag me)"
+Title.Text = "⚡ RAGE MODE V1.14"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 20
 Title.TextColor3 = Color3.new(1, 1, 1)
