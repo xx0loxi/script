@@ -84,7 +84,7 @@ UIStroke.Parent = MainFrame
 
 -- Заголовок
 local Title = Instance.new("TextLabel")
-Title.Text = "⚡ RAGE MODE V1.16"
+Title.Text = "⚡ RAGE MODE V1.14"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 20
 Title.TextColor3 = Color3.new(1, 1, 1)
@@ -347,112 +347,6 @@ local function CreateSlider(parent, text, minValue, maxValue, defaultValue)
     }
 end
 
--- Настройки визуалов
-local VisualSettings = {
-    ChamsColor = Color3.fromRGB(255, 0, 0),
-    BoxesColor = Color3.fromRGB(255, 50, 50),
-    ChamsOutline = Color3.fromRGB(255, 80, 80),
-    BoxesTransparency = 0.5
-}
-
--- Функция для создания цветовых пикеров
-local function CreateColorPicker(parent, text, defaultColor, callback)
-    local Container = Instance.new("Frame")
-    Container.BackgroundTransparency = 1
-    Container.Size = UDim2.new(1, 0, 0, 30)
-    Container.Parent = parent
-    
-    local Label = Instance.new("TextLabel")
-    Label.Text = text
-    Label.Font = Enum.Font.Gotham
-    Label.TextSize = 14
-    Label.TextColor3 = Color3.new(1, 1, 1)
-    Label.Size = UDim2.new(0.6, 0, 1, 0)
-    Label.BackgroundTransparency = 1
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = Container
-    
-    local ColorBox = Instance.new("Frame")
-    ColorBox.Size = UDim2.new(0.35, 0, 0.8, 0)
-    ColorBox.Position = UDim2.new(0.65, 0, 0.1, 0)
-    ColorBox.BackgroundColor3 = defaultColor
-    ColorBox.BorderSizePixel = 0
-    ColorBox.Parent = Container
-    
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 4)
-    UICorner.Parent = ColorBox
-    
-    ColorBox.MouseButton1Click:Connect(function()
-        local ColorPicker = Instance.new("Frame")
-        ColorPicker.Size = UDim2.new(0, 200, 0, 220)
-        ColorPicker.Position = UDim2.new(0.5, -100, 0.5, -110)
-        ColorPicker.AnchorPoint = Vector2.new(0.5, 0.5)
-        ColorPicker.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        ColorPicker.Parent = ScreenGui
-        
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 10)
-        UICorner.Parent = ColorPicker
-        
-        local function createSlider(yPos, text, defaultValue)
-            local slider = CreateSlider(ColorPicker, text, 0, 255, defaultValue * 255)
-            slider.Position = UDim2.new(0, 10, 0, yPos)
-            slider.Size = UDim2.new(0.9, -20, 0, 60)
-            return slider
-        end
-        
-        local RSlider = createSlider(30, "R:", defaultColor.R)
-        local GSlider = createSlider(90, "G:", defaultColor.G)
-        local BSlider = createSlider(150, "B:", defaultColor.B)
-        
-        local Preview = Instance.new("Frame")
-        Preview.Size = UDim2.new(0.8, 0, 0, 20)
-        Preview.Position = UDim2.new(0.1, 0, 0, 5)
-        Preview.BackgroundColor3 = defaultColor
-        Preview.Parent = ColorPicker
-        
-        local function updatePreview()
-            Preview.BackgroundColor3 = Color3.new(
-                RSlider:GetValue()/255,
-                GSlider:GetValue()/255,
-                BSlider:GetValue()/255
-            )
-        end
-        
-        RSlider.GetValue = function()
-            updatePreview()
-            return RSlider:GetValue()
-        end
-        
-        GSlider.GetValue = function()
-            updatePreview()
-            return GSlider:GetValue()
-        end
-        
-        BSlider.GetValue = function()
-            updatePreview()
-            return BSlider:GetValue()
-        end
-        
-        local ApplyBtn = CreateButton(ColorPicker, "APPLY")
-        ApplyBtn.Size = UDim2.new(0.8, 0, 0, 30)
-        ApplyBtn.Position = UDim2.new(0.1, 0, 0, 185)
-        ApplyBtn.MouseButton1Click:Connect(function()
-            local newColor = Color3.new(
-                RSlider:GetValue()/255,
-                GSlider:GetValue()/255,
-                BSlider:GetValue()/255
-            )
-            callback(newColor)
-            ColorBox.BackgroundColor3 = newColor
-            ColorPicker:Destroy()
-        end)
-    end)
-    
-    return ColorBox
-end
-
 -- Создаем элементы управления
 local PlayerTab = TabFrames.Player
 local VisualsTab = TabFrames.Visuals
@@ -476,41 +370,6 @@ end)
 local ChamsBtn = CreateButton(VisualsTab, "PLAYER CHAMS: OFF")
 local BoxesBtn = CreateButton(VisualsTab, "PLAYER BOXES: OFF")
 
--- Пикеры для цветов
-AddSpacer(VisualsTab, 10)
-local ChamsColorPicker = CreateColorPicker(VisualsTab, "Chams Color:", 
-    VisualSettings.ChamsColor, 
-    function(color)
-        VisualSettings.ChamsColor = color
-        updateChams()
-    end
-)
-
-local ChamsOutlinePicker = CreateColorPicker(VisualsTab, "Chams Outline:", 
-    VisualSettings.ChamsOutline, 
-    function(color)
-        VisualSettings.ChamsOutline = color
-        updateChams()
-    end
-)
-
-local BoxesColorPicker = CreateColorPicker(VisualsTab, "Boxes Color:", 
-    VisualSettings.BoxesColor, 
-    function(color)
-        VisualSettings.BoxesColor = color
-        updateBoxes()
-    end
-)
-
--- Слайдер для прозрачности боксов
-local BoxesTransSlider = CreateSlider(VisualsTab, "Boxes Transparency:", 0, 100, VisualSettings.BoxesTransparency * 100)
-BoxesTransSlider.GetValue = function()
-    local value = BoxesTransSlider:GetValue()
-    VisualSettings.BoxesTransparency = value / 100
-    updateBoxes()
-    return value
-end
-
 -- Aim Tab
 local AimBotBtn = CreateButton(AimTab, "AIMBOT: OFF")
 local SmoothnessSlider = CreateSlider(AimTab, "Smoothness:", 1, 30, 10)
@@ -527,29 +386,6 @@ end
 AddSpacer(PlayerTab, 15)
 AddSpacer(VisualsTab, 15)
 AddSpacer(AimTab, 15)
-
--- Функции обновления визуалов
-local function updateChams()
-    if not ChamsActive then return end
-    
-    for player, highlight in pairs(ChamsCache) do
-        if highlight then
-            highlight.FillColor = VisualSettings.ChamsColor
-            highlight.OutlineColor = VisualSettings.ChamsOutline
-        end
-    end
-end
-
-local function updateBoxes()
-    if not BoxesActive then return end
-    
-    for player, box in pairs(BoxesCache) do
-        if box then
-            box.Color3 = VisualSettings.BoxesColor
-            box.Transparency = VisualSettings.BoxesTransparency
-        end
-    end
-end
 
 -- Анимация открытия/закрытия меню
 local MenuVisible = false
@@ -690,9 +526,9 @@ local function ApplyChams(player)
         
         local highlight = Instance.new("Highlight")
         highlight.Name = "RAGE_Chams"
-        highlight.FillColor = VisualSettings.ChamsColor
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
         highlight.FillTransparency = 0.7
-        highlight.OutlineColor = VisualSettings.ChamsOutline
+        highlight.OutlineColor = Color3.fromRGB(255, 80, 80)
         highlight.OutlineTransparency = 0
         highlight.Parent = character
         
@@ -763,8 +599,8 @@ local function ApplyBox(player)
             box.AlwaysOnTop = true
             box.ZIndex = 10
             box.Size = Vector3.new(4, 6, 2)
-            box.Transparency = VisualSettings.BoxesTransparency
-            box.Color3 = VisualSettings.BoxesColor
+            box.Transparency = 0.5
+            box.Color3 = Color3.fromRGB(255, 50, 50)
             box.Parent = character
             
             BoxesCache[player] = box
