@@ -649,25 +649,40 @@ BoxesBtn.MouseButton1Click:Connect(function()
 end)
 
 -- АИМБОТ
+-- АИМБОТ С ПРИОРИТЕТОМ ВИДИМЫХ ИГРОКОВ
 local AimBotActive = false
 local AimBotConnection
 
-local function CanSeeTarget(targetPosition)
+local function CanSeeTarget(character)
     if not Player.Character then return false end
+    
+    local points = {
+        character:FindFirstChild("Head") and character.Head.Position,
+        character:FindFirstChild("HumanoidRootPart") and character.HumanoidRootPart.Position,
+        character:FindFirstChild("UpperTorso") and character.UpperTorso.Position
+    }
+    
     local origin = Camera.CFrame.Position
-    local direction = (targetPosition - origin).Unit
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Exclude
     raycastParams.FilterDescendantsInstances = {Player.Character}
     raycastParams.IgnoreWater = true
     
-    local ray = workspace:Raycast(
-        origin, 
-        direction * (targetPosition - origin).Magnitude,
-        raycastParams
-    )
-    
-    return ray == nil
+    for _, point in ipairs(points) do
+        if point then
+            local direction = (point - origin).Unit
+            local ray = workspace:Raycast(
+                origin, 
+                direction * (point - origin).Magnitude,
+                raycastParams
+            )
+            
+            if ray == nil then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 AimBotBtn.MouseButton1Click:Connect(function()
@@ -680,11 +695,13 @@ AimBotBtn.MouseButton1Click:Connect(function()
     end
     
     if AimBotActive then
-        AimBotConnection = RunService.Heartbeat:Connect(function() -- Заменено RenderStepped на Heartbeat
+        AimBotConnection = RunService.Heartbeat:Connect(function()
             if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-                local targetsWithoutWall = {}
-                local targetsWithWall = {}
+                local visibleTargets = {}
+                local hiddenTargets = {}
+                local allTargets = {}
                 
+                -- Собираем всех игроков
                 for _, player in ipairs(Players:GetPlayers()) do
                     if player ~= Player and player.Character then
                         local humanoid = player.Character:FindFirstChild("Humanoid")
@@ -692,38 +709,37 @@ AimBotBtn.MouseButton1Click:Connect(function()
                         
                         if humanoid and humanoid.Health > 0 and rootPart then
                             local distance = (rootPart.Position - Camera.CFrame.Position).Magnitude
-                            local visible = CanSeeTarget(rootPart.Position)
+                            local visible = CanSeeTarget(player.Character)
                             
-                            if visible then
-                                table.insert(targetsWithoutWall, {
-                                    player = player,
-                                    distance = distance
-                                })
-                            else
-                                table.insert(targetsWithWall, {
-                                    player = player,
-                                    distance = distance
-                                })
-                            end
+                            table.insert(allTargets, {
+                                player = player,
+                                distance = distance,
+                                visible = visible
+                            })
                         end
                     end
                 end
                 
-                local targetPlayer = nil
+                -- Сортируем по видимости и расстоянию
+                table.sort(allTargets, function(a, b)
+                    -- Приоритет видимым игрокам
+                    if a.visible and not b.visible then return true end
+                    if not a.visible and b.visible then return false end
+                    
+                    -- Если оба видимые или оба невидимые - сортируем по расстоянию
+                    return a.distance < b.distance
+                end)
                 
-                if #targetsWithoutWall > 0 then
-                    table.sort(targetsWithoutWall, function(a, b) return a.distance < b.distance end)
-                    targetPlayer = targetsWithoutWall[1].player
-                elseif #targetsWithWall > 0 then
-                    table.sort(targetsWithWall, function(a, b) return a.distance < b.distance end)
-                    targetPlayer = targetsWithWall[1].player
-                end
+                -- Выбираем лучшую цель
+                local targetPlayer = #allTargets > 0 and allTargets[1].player or nil
                 
                 if targetPlayer and targetPlayer.Character then
-                    local targetPart = targetPlayer.Character:FindFirstChild("Head") or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    local targetPart = targetPlayer.Character:FindFirstChild("Head") 
+                        or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        or targetPlayer.Character:FindFirstChild("UpperTorso")
+                    
                     if targetPart then
                         local smoothness = SmoothnessSlider:GetValue()
-                        
                         Camera.CFrame = Camera.CFrame:Lerp(
                             CFrame.new(Camera.CFrame.Position, targetPart.Position), 
                             1/smoothness
